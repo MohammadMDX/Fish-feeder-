@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automatic Fish Feeder</title>
+  <style>
+    :root {
+      --primary-color: #00796b;
+      --primary-dark: #004d40;
+      --secondary-color: #b2dfdb;
+      --background: #e0f7fa;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      color: var(--primary-color);
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 1.1rem;
+    }
+    
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+    
+    .card-title {
+      color: var(--primary-color);
+      margin-top: 0;
+      border-bottom: 2px solid var(--secondary-color);
+      padding-bottom: 10px;
+    }
+    
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      display: inline-block;
+      margin: 10px 5px;
+      text-decoration: none;
+    }
+    
+    .btn:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+    }
+    
+    .btn-small {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+    }
+    
+    .schedule-form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .time-input {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .time-input label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .time-input input {
+      width: 80px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #e8f5e9;
+      display: none;
+    }
+    
+    .schedule-list {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    .schedule-list li {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .schedule-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .device-info {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    
+    .info-item {
+      text-align: center;
+      margin: 10px;
+    }
+    
+    .info-value {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .card {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🐟 Automatic Fish Feeder</h1>
+      <p class="subtitle">Keep your fish happy with scheduled feedings</p>
+    </header>
+    
+    <div class="card">
+      <h2 class="card-title">Manual Feeding</h2>
+      <p>Feed your fish immediately with one click</p>
+      <button class="btn" onclick="feedFish()">Feed Now</button>
+    </div>
+    
+    <div class="card">
+      <h2 class="card-title">Feeding Schedule</h2>
+      <p>Set up to 3 automatic feeding times per day (24-hour format)</p>
+      
+      <form id="scheduleForm" class="schedule-form">
+        <div class="time-input">
+          <label for="time1">Time 1</label>
+          <input type="number" id="time1" name="time1" min="0" max="23" placeholder="8">
+        </div>
+        
+        <div class="time-input">
+          <label for="time2">Time 2</label>
+          <input type="number" id="time2" name="time2" min="0" max="23" placeholder="12">
+        </div>
+        
+        <div class="time-input">
+          <label for="time3">Time 3</label>
+          <input type="number" id="time3" name="time3" min="0" max="23" placeholder="18">
+        </div>
+      </form>
+      
+      <button class="btn" onclick="setSchedule()">Save Schedule</button>
+      <button class="btn" onclick="getSchedule()">View Current Schedule</button>
+      
+      <div id="scheduleStatus" class="status"></div>
+      
+      <div id="currentSchedule" style="display: none;">
+        <h3>Current Feeding Schedule</h3>
+        <ul class="schedule-list" id="scheduleList">
+          <!-- Schedule items will be added here -->
+        </ul>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2 class="card-title">Device Information</h2>
+      <div class="device-info">
+        <div class="info-item">
+          <div>Connection</div>
+          <div class="info-value" id="connectionStatus">Checking...</div>
+        </div>
+        <div class="info-item">
+          <div>Last Fed</div>
+          <div class="info-value" id="lastFed">Never</div>
+        </div>
+        <div class="info-item">
+          <div>Next Feeding</div>
+          <div class="info-value" id="nextFeeding">-</div>
+        </div>
+      </div>
+      <p><small>Device IP: <span id="deviceIP">YOUR_DEVICE_IP</span></small></p>
+    </div>
+  </div>
+  
+  <script>
+    // Replace with your ESP32's IP address
+    const deviceIP = 'YOUR_DEVICE_IP';
+    document.getElementById('deviceIP').textContent = deviceIP;
+    
+    // Check connection status on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      checkConnection();
+    });
+    
+    function checkConnection() {
+      fetch(http://${deviceIP}/, { method: 'GET' })
+        .then(response => {
+          if (response.ok) {
+            document.getElementById('connectionStatus').textContent = 'Connected';
+            document.getElementById('connectionStatus').style.color = '#00796b';
+          } else {
+            document.getElementById('connectionStatus').textContent = 'Error';
+            document.getElementById('connectionStatus').style.color = '#c62828';
+          }
+        })
+        .catch(error => {
+          document.getElementById('connectionStatus').textContent = 'Offline';
+          document.getElementById('connectionStatus').style.color = '#c62828';
+        });
+    }
+    
+    function feedFish() {
+      showStatus('Feeding fish...', 'info');
+      
+      fetch(http://${deviceIP}/feed, { method: 'GET' })
+        .then(response => {
+          if (response.ok) {
+            showStatus('Fish fed successfully!', 'success');
+            document.getElementById('lastFed').textContent = new Date().toLocaleTimeString();
+            updateNextFeeding();
+          } else {
+            showStatus('Error: Could not feed fish', 'error');
+          }
+        })
+        .catch(error => {
+          showStatus('Connection failed: ' + error, 'error');
+        });
+    }
+    
+    function setSchedule() {
+      const time1 = document.getElementById('time1').value || '8';
+      const time2 = document.getElementById('time2').value || '12';
+      const time3 = document.getElementById('time3').value || '18';
+      
+      showStatus('Saving schedule...', 'info');
+      
+      fetch(http://${deviceIP}/settime?t1=${time1}&t2=${time2}&t3=${time3}, { method: 'GET' })
+        .then(response => {
+          if (response.ok) {
+            showStatus('Schedule saved successfully!', 'success');
+            updateNextFeeding();
+          } else {
+            showStatus('Error: Could not save schedule', 'error');
+          }
+        })
+        .catch(error => {
+          showStatus('Connection failed: ' + error, 'error');
+        });
+    }
+    
+    function getSchedule() {
+      showStatus('Loading schedule...', 'info');
+      
+      fetch(http://${deviceIP}/schedule, { method: 'GET' })
+        .then(response => response.text())
+        .then(html => {
+          // Parse the schedule from the HTML response
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const scheduleItems = doc.querySelectorAll('.schedule-list li');
+          
+          if (scheduleItems.length > 0) {
+            const scheduleList = document.getElementById('scheduleList');
+            scheduleList.innerHTML = '';
+            
+            scheduleItems.forEach(item => {
+              scheduleList.appendChild(item.cloneNode(true));
+            });
+            
+            document.getElementById('currentSchedule').style.display = 'block';
+            showStatus('Schedule loaded', 'success');
+            updateNextFeeding();
+          } else {
+            showStatus('No schedule set', 'info');
+          }
+        })
+        .catch(error => {
+          showStatus('Error loading schedule: ' + error, 'error');
+        });
+    }
+    
+    function updateNextFeeding() {
+      // This would be more accurate if the ESP32 provided an API endpoint for next feeding time
+      // For now, we'll just display the earliest time in the schedule
+      const times = [];
+      document.querySelectorAll('#scheduleList li').forEach(item => {
+        const timeText = item.textContent.trim();
+        const hour = parseInt(timeText.split(':')[0]);
+        if (!isNaN(hour)) times.push(hour);
+      });
+      
+      if (times.length > 0) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        let nextHour = Math.min(...times.filter(h => h > currentHour));
+        
+        if (isFinite(nextHour)) {
+          document.getElementById('nextFeeding').textContent = ${nextHour}:00;
+        } else {
+          // If all times are passed, show first time tomorrow
+          nextHour = Math.min(...times);
+          document.getElementById('nextFeeding').textContent = ${nextHour}:00 (tomorrow);
+        }
+      } else {
+        document.getElementById('nextFeeding').textContent = 'Not scheduled';
+      }
+    }
+    
+    function showStatus(message, type) {
+      const statusElement = document.getElementById('scheduleStatus');
+      statusElement.textContent = message;
+      statusElement.style.display = 'block';
+      
+      // Reset classes
+      statusElement.className = 'status';
+      
+      // Add type-specific class
+      if (type === 'success') {
+        statusElement.style.backgroundColor = '#e8f5e9';
+        statusElement.style.color = '#2e7d32';
+      } else if (type === 'error') {
+        statusElement.style.backgroundColor = '#ffebee';
+        statusElement.style.color = '#c62828';
+      } else {
+        statusElement.style.backgroundColor = '#e3f2fd';
+        statusElement.style.color = '#1565c0';
+      }
+      
+      // Hide after 5 seconds
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
