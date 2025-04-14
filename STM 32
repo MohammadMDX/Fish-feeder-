@@ -1,0 +1,235 @@
+#include <Servo.h>          // Library for servo motor control
+
+#include <Wire.h>           // I2C communication library
+
+#include <LiquidCrystal_I2C.h> // Library for I2C LCD displays
+
+
+
+// Initialize Servo
+
+Servo myservo;              // Create servo object to control the servo
+
+const int servoPin = A5;    // Pin connected to servo (Note: Comment says D9 but code uses A5)
+
+
+
+// Ultrasonic sensor pins
+
+const int trigPin = D2;     // Trigger pin for ultrasonic sensor
+
+const int echoPin = D3;     // Echo pin for ultrasonic sensor
+
+
+
+// Initialize LCD with I2C address 0x27, 16 columns and 2 rows
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+
+
+// Function to measure distance using ultrasonic sensor
+
+int getDistance() {
+
+  digitalWrite(trigPin, LOW);       // Ensure trigger pin is low
+
+  delayMicroseconds(2);             // Wait 2 microseconds
+
+  digitalWrite(trigPin, HIGH);      // Send 10 microsecond pulse
+
+  delayMicroseconds(10);
+
+  digitalWrite(trigPin, LOW);
+
+
+
+  // Measure the echo pulse duration with 20ms timeout
+
+  long duration = pulseIn(echoPin, HIGH, 20000);
+
+  // Convert duration to distance in cm (speed of sound is 0.034 cm/µs)
+
+  int distance = duration * 0.034 / 2;
+
+  return distance;                 // Return the calculated distance
+
+}
+
+
+
+void setup() {
+
+  Serial.begin(9600);              // Initialize serial communication at 9600 baud
+
+  myservo.attach(servoPin);        // Attach servo to the specified pin
+
+
+
+  lcd.init();                      // Initialize the LCD
+
+  lcd.backlight();                 // Turn on LCD backlight
+
+
+
+  pinMode(trigPin, OUTPUT);        // Set trigger pin as output
+
+  pinMode(echoPin, INPUT);         // Set echo pin as input
+
+}
+
+
+
+void loop() {
+
+  int distance = getDistance();    // Get current distance from sensor
+
+  Serial.print("Distance: ");      // Print distance to serial monitor
+
+  Serial.println(distance);
+
+
+
+  // Check if area is clear (distance >10cm or <=2cm which is likely an error)
+
+  if (distance > 10 || distance <= 2) {
+
+    lcd.clear();                   // Clear LCD display
+
+    lcd.setCursor(3, 0);           // Set cursor to column 3, row 0
+
+    lcd.print("Feeding Time!");    // Display feeding message
+
+
+
+    // 10-second countdown before feeding
+
+    for (int i = 10; i >= 0; i--) {
+
+      distance = getDistance();    // Check for hand presence again
+
+      
+
+      // If hand detected during countdown (2-10cm range)
+
+      if (distance <= 10 && distance > 2) {
+
+        lcd.clear();
+
+        lcd.setCursor(1, 0);
+
+        lcd.print("Hand Detected!");
+
+        lcd.setCursor(0, 1);
+
+        lcd.print("Feeding Stopped!");
+
+        delay(2000);
+
+        return;                    // Exit the loop immediately
+
+      }
+
+
+
+      // Update countdown display
+
+      lcd.setCursor(6, 1);
+
+      lcd.print("   ");           // Clear previous number
+
+      lcd.setCursor(6, 1);
+
+      lcd.print(i);                // Display current countdown value
+
+      delay(1000);                 // Wait 1 second
+
+    }
+
+
+
+    lcd.clear();
+
+    lcd.setCursor(4, 0);
+
+    lcd.print("Dispensing");      // Show dispensing message
+
+
+
+    // Servo movement sequence (3 cycles)
+
+    for (int j = 0; j < 3; j++) {
+
+      distance = getDistance();   // Check for hand presence during dispensing
+
+      
+
+      if (distance <= 10 && distance > 2) {
+
+        lcd.clear();
+
+        lcd.setCursor(1, 0);
+
+        lcd.print("Hand Detected!");
+
+        lcd.setCursor(0, 1);
+
+        lcd.print("Stopped Mid-Feed");
+
+        myservo.write(0);         // Reset servo to 0 position
+
+        delay(2000);
+
+        return;                   // Exit if hand is detected
+
+      }
+
+
+
+      // Servo movement sequence:
+
+      myservo.write(90);          // Move to 90 degrees
+
+      delay(500);
+
+      myservo.write(180);         // Move to 180 degrees
+
+      delay(500);
+
+      myservo.write(0);           // Return to 0 degrees
+
+      delay(500);
+
+    }
+
+
+
+    lcd.clear();
+
+    lcd.setCursor(5, 0);
+
+    lcd.print("Done! :)");        // Display completion message
+
+    delay(5000);                  // Wait 5 seconds before next cycle
+
+
+
+  } else {
+
+    // Hand is too close (2-10cm range), don't feed
+
+    lcd.clear();
+
+    lcd.setCursor(1, 0);
+
+    lcd.print("Hand Detected!");
+
+    lcd.setCursor(0, 1);
+
+    lcd.print("Waiting to Clear");
+
+    delay(500);                   // Short delay before checking again
+
+  }
+
+}
